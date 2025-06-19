@@ -1,0 +1,37 @@
+{
+    "name": "test",
+    "description": "test",
+    "module": "src/index.ts",
+    "type": "module",
+    "version": "2.0.0",
+    "scripts": {
+        "start": "bun run dist/index.js",
+        "dev": "bun --watch run src/index.ts",
+        "lint": "bun run format && bunx tsc --noEmit && bunx eslint --fix .",
+        "format": "bunx prettier --write .",
+        "type-check": "tsc --noEmit",
+        "build": "bun build ./src/index.ts --outdir ./dist --target node"
+    },
+    "dependencies": {
+        "colors": "^1.4.0",
+        "crypto-js": "^4.2.0",
+        "dotenv": "^16.4.7"
+    },
+    "devDependencies": {
+        "@eslint/eslintrc": "^3.3.1",
+        "@eslint/js": "^9.26.0",
+        "@types/bun": "latest",
+        "@types/crypto-js": "^4.2.2",
+        "@typescript-eslint/eslint-plugin": "^8.32.0",
+        "@typescript-eslint/parser": "^8.32.0",
+        "@typescript-eslint/typescript-estree": "^8.32.0",
+        "bun-types": "latest",
+        "eslint": "9.14.0",
+        "prettier": "^3.5.3",
+        "typescript": "5.6.3",
+        "typescript-eslint": "^8.32.0"
+    },
+    "peerDependencies": {
+        "typescript": "^5.0.0"
+    }
+}

@@ -1,0 +1,2 @@
+# I have no idea why I made this
+This is just a personal project I "worked" on to help me estimate how much time it takes to complete a course and get information from Khanacademy. Web scraping moment. Don't use this project seriously lol
