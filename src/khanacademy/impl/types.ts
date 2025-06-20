@@ -337,3 +337,64 @@ export interface FormattedOutput {
         countryCode: string;
     };
 }
+
+export interface CourseSummary {
+    course: {
+        title: string;
+        description: string;
+        slug: string;
+        totalUnits: number;
+        totalTopics: number;
+        totalContentItems: number;
+        masteryEnabled: boolean;
+    };
+    content: {
+        videos: {
+            total: number;
+            withMetadata: number;
+            withKeyMoments: number;
+            withSubtitles: number;
+            totalDurationMinutes: number;
+            totalDurationFormatted: string;
+        };
+        exercises: number;
+        articles: number;
+        quizzes: number;
+        unitTests: number;
+        other: number;
+    };
+    timeEstimate: {
+        videoMinutes: number;
+        videoFormatted: string;
+        exerciseMinutes: number;
+        totalMinutes: number;
+        totalFormatted: string;
+        courseChallenge?: {
+            minutes: number;
+            formatted: string;
+        };
+        masteryChallenge?: {
+            minutes: number;
+            formatted: string;
+        };
+    };
+    breakdown: {
+        unitSummaries: {
+            title: string;
+            topicCount: number;
+            contentCount: number;
+            videoCount: number;
+            videoDurationMinutes: number;
+            estimatedMinutes: number;
+        }[];
+    };
+    metadata: {
+        extractedAt: string;
+        path: string;
+        countryCode: string;
+    };
+}
+
+export interface FormattedOutputWithSummary extends FormattedOutput {
+    summary: CourseSummary;
+}

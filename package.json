@@ -10,10 +10,16 @@
         "lint": "bun run format && bunx tsc --noEmit && bunx eslint --fix .",
         "format": "bunx prettier --write .",
         "type-check": "tsc --noEmit",
-        "build": "bun build ./src/index.ts --outdir ./dist --target node"
+        "build": "bun build ./src/index.ts --outdir ./dist --target node",
+        "planner": "bun run src/index.ts",
+        "plan": "bun run src/index.ts plan",
+        "generate": "bun run src/index.ts generate-data",
+        "check": "bun run src/index.ts check-data",
+        "curriculum": "bun run src/index.ts curriculum"
     },
     "dependencies": {
         "colors": "^1.4.0",
+        "commander": "^14.0.0",
         "crypto-js": "^4.2.0",
         "dotenv": "^16.4.7"
     },

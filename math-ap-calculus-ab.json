@@ -46301,9 +46301,139 @@
     }
   },
   "metadata": {
-    "extractedAt": "2025-06-19T23:20:55.851Z",
+    "extractedAt": "2025-06-19T23:54:04.558Z",
     "commitSha": "892e3563cdaf14e26db1092266abcc8f9fd3419b",
     "path": "math/ap-calculus-ab",
     "countryCode": "US"
+  },
+  "summary": {
+    "course": {
+      "title": "AP®︎/College Calculus AB",
+      "description": "Learn AP®︎ Calculus AB—everything you need to know about limits, derivatives, and integrals to pass the AP® test.",
+      "slug": "ap-calculus-ab",
+      "totalUnits": 10,
+      "totalTopics": 135,
+      "totalContentItems": 593,
+      "masteryEnabled": true
+    },
+    "content": {
+      "videos": {
+        "total": 370,
+        "withMetadata": 50,
+        "withKeyMoments": 50,
+        "withSubtitles": 50,
+        "totalDurationMinutes": 276.77,
+        "totalDurationFormatted": "4 hours 37 minutes"
+      },
+      "exercises": 164,
+      "articles": 59,
+      "quizzes": 0,
+      "unitTests": 0,
+      "other": 0
+    },
+    "timeEstimate": {
+      "videoMinutes": 830.31,
+      "videoFormatted": "13 hours 50 minutes",
+      "exerciseMinutes": 0,
+      "totalMinutes": 875,
+      "totalFormatted": "14 hours 35 minutes",
+      "courseChallenge": {
+        "minutes": 38,
+        "formatted": "38 minutes"
+      },
+      "masteryChallenge": {
+        "minutes": 8,
+        "formatted": "8 minutes"
+      }
+    },
+    "breakdown": {
+      "unitSummaries": [
+        {
+          "title": "Limits and continuity",
+          "topicCount": 24,
+          "contentCount": 99,
+          "videoCount": 59,
+          "videoDurationMinutes": 276.77000000000004,
+          "estimatedMinutes": 554
+        },
+        {
+          "title": "Differentiation: definition and basic derivative rules",
+          "topicCount": 16,
+          "contentCount": 80,
+          "videoCount": 46,
+          "videoDurationMinutes": 0,
+          "estimatedMinutes": 0
+        },
+        {
+          "title": "Differentiation: composite, implicit, and inverse functions",
+          "topicCount": 14,
+          "contentCount": 60,
+          "videoCount": 38,
+          "videoDurationMinutes": 0,
+          "estimatedMinutes": 0
+        },
+        {
+          "title": "Contextual applications of differentiation",
+          "topicCount": 12,
+          "contentCount": 44,
+          "videoCount": 27,
+          "videoDurationMinutes": 0,
+          "estimatedMinutes": 0
+        },
+        {
+          "title": "Applying derivatives to analyze functions ",
+          "topicCount": 19,
+          "contentCount": 75,
+          "videoCount": 46,
+          "videoDurationMinutes": 0,
+          "estimatedMinutes": 0
+        },
+        {
+          "title": "Integration and accumulation of change",
+          "topicCount": 19,
+          "contentCount": 105,
+          "videoCount": 60,
+          "videoDurationMinutes": 0,
+          "estimatedMinutes": 0
+        },
+        {
+          "title": "Differential equations",
+          "topicCount": 10,
+          "contentCount": 33,
+          "videoCount": 20,
+          "videoDurationMinutes": 0,
+          "estimatedMinutes": 0
+        },
+        {
+          "title": "Applications of integration",
+          "topicCount": 17,
+          "contentCount": 58,
+          "videoCount": 37,
+          "videoDurationMinutes": 0,
+          "estimatedMinutes": 0
+        },
+        {
+          "title": "AP Calculus AB solved free response questions from past exams",
+          "topicCount": 3,
+          "contentCount": 37,
+          "videoCount": 37,
+          "videoDurationMinutes": 0,
+          "estimatedMinutes": 0
+        },
+        {
+          "title": "AP®︎ Calculus AB Standards mappings",
+          "topicCount": 1,
+          "contentCount": 2,
+          "videoCount": 0,
+          "videoDurationMinutes": 0,
+          "estimatedMinutes": 0
+        }
+      ]
+    },
+    "metadata": {
+      "extractedAt": "2025-06-19T23:54:04.558Z",
+      "path": "math/ap-calculus-ab",
+      "countryCode": "US"
+    }
   }
 }
