@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import { createAdvancedSummerPlan } from "./planner/index.js";
 import { generateStudyPlanPDF } from "./planner/pdfGenerator.js";
+import { generateExcelSpreadsheet } from "./planner/excelGenerator.js";
 import { getContentForPath, formatKhanAcademyData, saveFormattedData, generateCourseSummary } from "./khanacademy/index.js";
 import * as fs from "fs";
 
@@ -227,8 +228,8 @@ program
 // Command to generate Excel table
 program
     .command("excel")
-    .description("Generate daily breakdown table for Excel/Google Sheets")
-    .option("-o, --output <filename>", "Output CSV filename", "calculus-2-daily-schedule.csv")
+    .description("Generate professionally formatted Excel spreadsheet with daily breakdown")
+    .option("-o, --output <filename>", "Output Excel filename", "calculus-2-daily-schedule.xlsx")
     .option("--vacation-start <date>", "Vacation start date (YYYY-MM-DD)", "2024-07-23")
     .option("--vacation-end <date>", "Vacation end date (YYYY-MM-DD)", "2024-08-07")
     .option("--camping-start <date>", "Camping start date (YYYY-MM-DD)", "2024-09-14")
@@ -236,61 +237,42 @@ program
     .option("--school-start <date>", "School start date (YYYY-MM-DD)", "2024-09-21")
     .action(async (options) => {
         try {
-            console.log("📊 Generating Excel table for daily breakdown...\n");
+            console.log("📊 Generating professional Excel spreadsheet...\n");
 
             const studyPlan = await createAdvancedSummerPlan();
+            const filename = await generateExcelSpreadsheet(studyPlan, options.output);
 
-            // Generate enhanced CSV content
-            const csvHeader = "📅 Day,📆 Date,📚 Calculus 2 Topic,🎯 Daily Goal,📖 Unit,📊 Week,⏰ Study Hours,✅ Completed";
-            const csvRows = studyPlan.dailyBreakdown.map((day, index) => {
-                // Create more readable daily goals
-                const enhancedGoal = day.topicBreakdown.replace("Complete: ", "✅ Master: ").replace("Continue: ", "📖 Continue: ").replace("Work on: ", "🔄 Work on: ").replace(" + Start next topic", " → Begin next topic");
-
-                // Format unit names with better clarity
-                const formattedUnit = day.unitTitle
-                    .replace("Integrals review", "🔢 Integrals Review")
-                    .replace("Integration techniques", "🧮 Integration Techniques")
-                    .replace("Differential equations", "📐 Differential Equations")
-                    .replace("Applications of integrals", "🎯 Applications of Integrals")
-                    .replace("Parametric equations, polar coordinates, and vector-valued functions", "📊 Parametric & Polar Functions")
-                    .replace("Series", "∞ Infinite Series");
-
-                // Add progress indicator
-                const totalDays = studyPlan.dailyBreakdown.length;
-                const progressPercent = Math.round(((index + 1) / totalDays) * 100);
-
-                return `"${day.day}","${day.date}","${day.calc2Topic}","${enhancedGoal}","${formattedUnit}","Week ${day.weekNumber}","${day.studyHours} hours","☐ (${progressPercent}% complete)"`;
-            });
-
-            const csvContent = [csvHeader, ...csvRows].join("\n");
-
-            // Save to file
-            fs.writeFileSync(options.output, csvContent);
-
-            console.log(`\n🎉 Excel table generated successfully!`);
-            console.log(`📎 File: ${options.output}`);
+            console.log(`\n🎉 Excel spreadsheet generated successfully!`);
+            console.log(`📎 File: ${filename}`);
             console.log(`📊 Total study days: ${studyPlan.dailyBreakdown.length}`);
             console.log(`⏱️  Total study hours: ${studyPlan.dailyBreakdown.reduce((sum, day) => sum + day.studyHours, 0)} hours`);
             console.log(`📈 Study period: ${studyPlan.dailyBreakdown[0]?.date} → ${studyPlan.dailyBreakdown[studyPlan.dailyBreakdown.length - 1]?.date}`);
 
-            console.log("\n✨ ENHANCED FEATURES INCLUDED:");
-            console.log("• 📅 Emoji headers for easy identification");
-            console.log("• 🎯 Clear daily goals with action words");
-            console.log("• 📊 Progress tracking with percentages");
-            console.log("• ☐ Checkboxes for completion tracking");
-            console.log("• 🎨 Color-coded unit names with emojis");
+            console.log("\n✨ PROFESSIONAL FEATURES INCLUDED:");
+            console.log("• 🎨 Modern formatting with professional blue headers");
+            console.log("• 📊 Color-coded units for easy identification");
+            console.log("• 📝 Bold text for important information");
+            console.log("• 📏 Optimized column widths and row heights");
+            console.log("• 🔲 Clean borders and alternating row colors");
+            console.log("• 📋 Two worksheets: Daily Schedule + Summary");
+            console.log("• ✅ Completion tracking with progress percentages");
+            console.log("• 📱 Proper text wrapping for long content");
 
-            console.log("\n💡 HOW TO USE IN EXCEL:");
-            console.log("1. 📂 Open Excel or Google Sheets");
-            console.log(`2. 📥 Import the file: ${options.output}`);
-            console.log('3. ⚙️  Choose "Comma" as delimiter');
-            console.log("4. 📅 Format the Date column as Date type");
-            console.log("5. 🔍 Add filters to columns for easy sorting");
-            console.log("6. 🎨 Use conditional formatting to highlight different units");
-            console.log('7. ✅ Check off completed days in the "Completed" column');
-            console.log("8. 📊 Sort by Week or Unit to see progress by section");
+            console.log("\n💡 EXCEL FEATURES:");
+            console.log("• 🎯 Professional blue header with white text");
+            console.log("• 🌈 Each Calculus unit has its own color theme");
+            console.log("• 📊 Summary sheet with key metrics");
+            console.log("• 🔍 Easy to filter and sort data");
+            console.log("• 📱 Optimized for both desktop and mobile viewing");
+            console.log("• 💾 Native .xlsx format - no encoding issues!");
+
+            console.log("\n🚀 READY TO USE:");
+            console.log(`1. 📂 Double-click to open: ${filename}`);
+            console.log("2. ✅ Check off completed days in the 'Completed' column");
+            console.log("3. 📊 Use the Summary sheet for progress tracking");
+            console.log("4. 🎨 All formatting is already applied!");
         } catch (error) {
-            console.error("❌ Error generating Excel table:", error);
+            console.error("❌ Error generating Excel spreadsheet:", error);
             console.log('\n💡 Try running "check-data" to verify your data files are valid.');
             process.exit(1);
         }

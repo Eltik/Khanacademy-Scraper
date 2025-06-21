@@ -602,9 +602,9 @@ class AdvancedSummerPlanner {
         console.log("• ☐ Checkboxes for completion tracking");
         console.log("• 🎨 Color-coded unit names with emojis");
 
-        console.log("\n💡 GET THE ENHANCED CSV:");
+        console.log("\n💡 GET THE PROFESSIONAL EXCEL FILE:");
         console.log("🚀 Run: bun src/index.ts excel");
-        console.log("📁 Opens perfectly in Excel with all formatting!");
+        console.log("📁 Creates a beautifully formatted .xlsx file with no encoding issues!");
     }
 }
 
