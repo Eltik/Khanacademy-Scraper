@@ -25,3 +25,4 @@ src/lib/impl/local/impl/data/*
 *.jpg
 *.toml
 *.sh
+*.csv

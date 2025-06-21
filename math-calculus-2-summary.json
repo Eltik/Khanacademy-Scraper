@@ -1,0 +1,98 @@
+{
+  "course": {
+    "title": "Calculus 2",
+    "description": "",
+    "slug": "calculus-2",
+    "totalUnits": 6,
+    "totalTopics": 95,
+    "totalContentItems": 372,
+    "masteryEnabled": true
+  },
+  "content": {
+    "videos": {
+      "total": 243,
+      "withMetadata": 50,
+      "withKeyMoments": 50,
+      "withSubtitles": 50,
+      "totalDurationMinutes": 277.58,
+      "totalDurationFormatted": "4 hours 38 minutes"
+    },
+    "exercises": 105,
+    "articles": 24,
+    "quizzes": 0,
+    "unitTests": 0,
+    "other": 0
+  },
+  "timeEstimate": {
+    "videoMinutes": 832.74,
+    "videoFormatted": "13 hours 53 minutes",
+    "exerciseMinutes": 0,
+    "totalMinutes": 878,
+    "totalFormatted": "14 hours 38 minutes",
+    "courseChallenge": {
+      "minutes": 38,
+      "formatted": "38 minutes"
+    },
+    "masteryChallenge": {
+      "minutes": 8,
+      "formatted": "8 minutes"
+    }
+  },
+  "breakdown": {
+    "unitSummaries": [
+      {
+        "title": "Integrals review",
+        "topicCount": 18,
+        "contentCount": 93,
+        "videoCount": 55,
+        "videoDurationMinutes": 277.58,
+        "estimatedMinutes": 555
+      },
+      {
+        "title": "Integration techniques",
+        "topicCount": 10,
+        "contentCount": 51,
+        "videoCount": 34,
+        "videoDurationMinutes": 0,
+        "estimatedMinutes": 0
+      },
+      {
+        "title": "Differential equations",
+        "topicCount": 11,
+        "contentCount": 43,
+        "videoCount": 28,
+        "videoDurationMinutes": 0,
+        "estimatedMinutes": 0
+      },
+      {
+        "title": "Applications of integrals",
+        "topicCount": 19,
+        "contentCount": 62,
+        "videoCount": 40,
+        "videoDurationMinutes": 0,
+        "estimatedMinutes": 0
+      },
+      {
+        "title": "Parametric equations, polar coordinates, and vector-valued functions",
+        "topicCount": 15,
+        "contentCount": 35,
+        "videoCount": 20,
+        "videoDurationMinutes": 0,
+        "estimatedMinutes": 0
+      },
+      {
+        "title": "Series",
+        "topicCount": 22,
+        "contentCount": 88,
+        "videoCount": 66,
+        "videoDurationMinutes": 0,
+        "estimatedMinutes": 0
+      }
+    ]
+  },
+  "metadata": {
+    "extractedAt": "2025-06-21T18:46:10.374Z",
+    "path": "math/calculus-2",
+    "countryCode": "US"
+  }
+}

@@ -16,7 +16,8 @@
         "generate": "bun run src/index.ts generate-data",
         "check": "bun run src/index.ts check-data",
         "curriculum": "bun run src/index.ts curriculum",
-        "pdf": "bun run src/index.ts pdf"
+        "pdf": "bun run src/index.ts pdf",
+        "excel": "bun run src/index.ts excel"
     },
     "dependencies": {
         "@types/pdfkit": "^0.14.0",
@@ -24,6 +25,7 @@
         "commander": "^14.0.0",
         "crypto-js": "^4.2.0",
         "dotenv": "^16.4.7",
+        "exceljs": "^4.4.0",
         "pdfkit": "^0.17.1"
     },
     "devDependencies": {

@@ -20,11 +20,7 @@ import { saveFormattedData } from "./impl/saveFormattedData.js";
 export const processAllCourses = async () => {
     const paths = [
         {
-            path: "math/ap-calculus-ab",
-            countryCode: "US",
-        },
-        {
-            path: "math/ap-calculus-bc",
+            path: "math/calculus-2",
             countryCode: "US",
         },
     ];
