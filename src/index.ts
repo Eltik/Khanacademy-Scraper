@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 import { createAdvancedSummerPlan } from './planner/index.js';
+import { generateStudyPlanPDF } from './planner/pdfGenerator.js';
 import { getContentForPath, formatKhanAcademyData, saveFormattedData, generateCourseSummary } from './khanacademy/index.js';
 import * as fs from 'fs';
 
@@ -157,6 +158,34 @@ program
             
         } catch (error) {
             console.error('❌ Error generating study plan:', error);
+            console.log('\n💡 Try running "check-data" to verify your data files are valid.');
+            process.exit(1);
+        }
+    });
+
+// Command to generate PDF
+program
+    .command('pdf')
+    .description('Generate a PDF version of your study plan')
+    .option('-o, --output <filename>', 'Output filename', 'calculus-2-study-plan.pdf')
+    .option('--vacation-start <date>', 'Vacation start date (YYYY-MM-DD)', '2024-07-23')
+    .option('--vacation-end <date>', 'Vacation end date (YYYY-MM-DD)', '2024-08-07')
+    .option('--camping-start <date>', 'Camping start date (YYYY-MM-DD)', '2024-09-14')
+    .option('--camping-end <date>', 'Camping end date (YYYY-MM-DD)', '2024-09-17')
+    .option('--school-start <date>', 'School start date (YYYY-MM-DD)', '2024-09-21')
+    .action(async (options) => {
+        try {
+            console.log('📄 Generating PDF study plan...\n');
+            
+            const studyPlan = await createAdvancedSummerPlan();
+            const filename = await generateStudyPlanPDF(studyPlan, options.output);
+            
+            console.log('\n🎉 PDF study plan generated successfully!');
+            console.log(`📎 File: ${filename}`);
+            console.log('💌 Ready to send to your mom!');
+            
+        } catch (error) {
+            console.error('❌ Error generating PDF:', error);
             console.log('\n💡 Try running "check-data" to verify your data files are valid.');
             process.exit(1);
         }

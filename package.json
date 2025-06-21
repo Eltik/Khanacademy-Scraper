@@ -15,13 +15,16 @@
         "plan": "bun run src/index.ts plan",
         "generate": "bun run src/index.ts generate-data",
         "check": "bun run src/index.ts check-data",
-        "curriculum": "bun run src/index.ts curriculum"
+        "curriculum": "bun run src/index.ts curriculum",
+        "pdf": "bun run src/index.ts pdf"
     },
     "dependencies": {
+        "@types/pdfkit": "^0.14.0",
         "colors": "^1.4.0",
         "commander": "^14.0.0",
         "crypto-js": "^4.2.0",
-        "dotenv": "^16.4.7"
+        "dotenv": "^16.4.7",
+        "pdfkit": "^0.17.1"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.1",
