@@ -278,6 +278,47 @@ program
         }
     });
 
+// Add a new command to check the last few days
+program
+    .command("check-last-days")
+    .description("Check the last few days of the study plan to verify content distribution")
+    .action(async () => {
+        try {
+            console.log("🔍 Checking the last few days of the study plan...\n");
+
+            const studyPlan = await createAdvancedSummerPlan();
+
+            console.log("\n📅 LAST 5 DAYS OF STUDY PLAN:");
+            console.log("═".repeat(80));
+
+            const lastDays = studyPlan.dailyBreakdown.slice(-5);
+            lastDays.forEach((day: any, index: number) => {
+                console.log(`\n📅 ${day.day}, ${day.date} - Week ${day.weekNumber}`);
+                console.log(`📚 Topic: ${day.calc2Topic}`);
+                console.log(`🎯 Goal: ${day.topicBreakdown}`);
+                console.log(`📖 Unit: ${day.unitTitle}`);
+
+                // Extract and display the content list
+                const scheduleItems = day.dailySchedule.split(" | ");
+                const contentItem = scheduleItems.find((item: string) => item.startsWith("📚 Today's Content:"));
+                if (contentItem) {
+                    const content = contentItem.replace("📚 Today's Content: ", "");
+                    console.log(`📋 Content: ${content.substring(0, 100)}${content.length > 100 ? "..." : ""}`);
+                }
+
+                if (index < lastDays.length - 1) {
+                    console.log("─".repeat(60));
+                }
+            });
+
+            console.log(`\n✅ Total study days: ${studyPlan.dailyBreakdown.length}`);
+            console.log(`📊 Study period: ${studyPlan.dailyBreakdown[0]?.date} → ${studyPlan.dailyBreakdown[studyPlan.dailyBreakdown.length - 1]?.date}`);
+        } catch (error) {
+            console.error("❌ Error checking last days:", error);
+            process.exit(1);
+        }
+    });
+
 // Error handling
 program.exitOverride();
 

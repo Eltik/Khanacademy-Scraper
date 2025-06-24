@@ -18,6 +18,7 @@ export interface DailyBreakdown {
     unitTitle: string;
     weekNumber: number;
     studyHours: number;
+    dailySchedule: string;
 }
 
 export interface StudyPlan {
@@ -65,6 +66,24 @@ export interface UnitPlan {
     estimatedHours: number;
     weekTarget: number;
     isCalc2Topic: boolean;
+    topicDetails: TopicDetail[];
+}
+
+export interface TopicDetail {
+    title: string;
+    estimatedHours: number;
+    contentCount: number;
+    videoCount: number;
+    videoDurationMinutes: number;
+    contents: ContentItem[];
+}
+
+export interface ContentItem {
+    id: string;
+    title: string;
+    contentKind: string;
+    estimatedMinutes: number;
+    url?: string;
 }
 
 class AdvancedSummerPlanner {
@@ -189,21 +208,92 @@ class AdvancedSummerPlanner {
 
         calc2Data.course.units.forEach((unit, index) => {
             const topics = unit.topics.map((topic) => topic.title);
-            const estimatedHours = Math.max(
-                (unit.totalTimeEstimate?.totalMinutes || 0) / 60,
-                topics.length * 2.5, // Minimum 2.5 hours per topic for thorough understanding
-            );
+
+            // Create detailed topic information with realistic time estimates
+            const topicDetails: TopicDetail[] = unit.topics.map((topic) => {
+                const videoCount = topic.contents.filter((content) => content.contentKind === "Video").length;
+                const exerciseCount = topic.contents.filter((content) => content.contentKind === "Exercise").length;
+                const videoDurationMinutes = topic.contents.filter((content) => content.contentKind === "Video").reduce((sum, content) => sum + (content.videoMetadata?.durationMinutes || 0), 0);
+
+                // Create detailed content breakdown
+                const contents: ContentItem[] = topic.contents.map((content) => {
+                    let estimatedMinutes: number;
+
+                    // First, try to use Khan Academy's provided time estimate
+                    if (content.timeEstimate?.totalMinutes && content.timeEstimate.totalMinutes > 0) {
+                        estimatedMinutes = content.timeEstimate.totalMinutes;
+                    } else if (content.timeEstimate?.averageMinutes && content.timeEstimate.averageMinutes > 0) {
+                        estimatedMinutes = content.timeEstimate.averageMinutes;
+                    } else {
+                        // Fall back to our content-type-based estimates
+                        if (content.contentKind === "Video") {
+                            estimatedMinutes = (content.videoMetadata?.durationMinutes || 5) * 1.5; // Video + note-taking time
+                        } else if (content.contentKind === "Exercise") {
+                            estimatedMinutes = 18; // Average exercise time
+                        } else if (content.contentKind === "Article") {
+                            estimatedMinutes = 10; // Reading time
+                        } else {
+                            estimatedMinutes = 15; // Quiz/other content
+                        }
+                    }
+
+                    return {
+                        id: content.id,
+                        title: content.title,
+                        contentKind: content.contentKind,
+                        estimatedMinutes: Math.round(estimatedMinutes * 10) / 10,
+                        url: content.url,
+                    };
+                });
+
+                // More realistic time estimation based on content
+                let topicHours: number;
+                if (topic.totalTimeEstimate?.totalMinutes && topic.totalTimeEstimate.totalMinutes > 0) {
+                    // Use Khan Academy's topic-level estimate if available
+                    topicHours = topic.totalTimeEstimate.totalMinutes / 60;
+                } else if (topic.totalTimeEstimate?.averageMinutes && topic.totalTimeEstimate.averageMinutes > 0) {
+                    // Use average estimate if total not available
+                    topicHours = topic.totalTimeEstimate.averageMinutes / 60;
+                } else {
+                    // Calculate based on individual content items (which now use KA estimates when available)
+                    const totalMinutes = contents.reduce((sum, content) => sum + content.estimatedMinutes, 0);
+                    topicHours = totalMinutes / 60;
+
+                    // Minimum and maximum bounds for realistic study times
+                    if (videoCount === 0 && exerciseCount === 0) {
+                        // Quiz or assessment topics
+                        topicHours = Math.max(0.5, topicHours);
+                    } else {
+                        // Regular content topics
+                        topicHours = Math.max(1.0, Math.min(4.0, topicHours));
+                    }
+                }
+
+                return {
+                    title: topic.title,
+                    estimatedHours: Math.round(topicHours * 10) / 10,
+                    contentCount: topic.contents.length,
+                    videoCount: videoCount,
+                    videoDurationMinutes: Math.round(videoDurationMinutes * 10) / 10,
+                    contents: contents,
+                };
+            });
+
+            // Calculate total unit hours from actual topic estimates
+            const totalHours = topicDetails.reduce((sum, topic) => sum + topic.estimatedHours, 0);
 
             unitPlans.push({
                 unitNumber: index + 1,
                 unitTitle: unit.title,
                 topics: topics,
-                estimatedHours: Math.round(estimatedHours * 10) / 10,
+                estimatedHours: Math.round(totalHours * 10) / 10,
                 weekTarget: index + 1,
                 isCalc2Topic: true, // All topics are Calc 2 topics now
+                topicDetails: topicDetails,
             });
         });
 
+        // Don't scale down - we'll distribute evenly instead
         return unitPlans;
     }
 
@@ -213,26 +303,21 @@ class AdvancedSummerPlanner {
         const studyDays: Date[] = [];
 
         const currentYear = startDate.getFullYear();
-        const adjustedSchoolStart = new Date(`${currentYear}-09-21`);
         const adjustedVacationStart = new Date(`${currentYear}-07-23`);
         const adjustedVacationEnd = new Date(`${currentYear}-08-07`);
         const adjustedCampingStart = new Date(`${currentYear}-09-14`);
-        const adjustedCampingEnd = new Date(`${currentYear}-09-17`);
 
-        const endDate = adjustedSchoolStart;
+        // End study one week before school starts (Sept 21) for buffer week
+        // This means we finish on September 14th (before camping trip)
+        const endDate = adjustedCampingStart; // End on September 14th
         const vacationStart = adjustedVacationStart;
         const vacationEnd = adjustedVacationEnd;
-        const campingStart = adjustedCampingStart;
-        const campingEnd = adjustedCampingEnd;
 
         for (let date = new Date(startDate); date < endDate; date.setDate(date.getDate() + 1)) {
             let isAvailable = true;
 
+            // Only check vacation constraint since we end before camping trip
             if (date >= vacationStart && date <= vacationEnd) {
-                isAvailable = false;
-            }
-
-            if (date >= campingStart && date <= campingEnd) {
                 isAvailable = false;
             }
 
@@ -319,12 +404,11 @@ class AdvancedSummerPlanner {
 
     private generateWeeklySchedules(studyDays: Date[], unitPlans: UnitPlan[]): WeeklySchedule[] {
         const weeks: WeeklySchedule[] = [];
-        const startDate = studyDays[0];
+        const startDate = studyDays[0]; // June 22, 2025 (Sunday)
         const calcHoursPerDay = 3;
 
+        // Start from the actual study start date, not the calendar week
         const currentWeekStart = new Date(startDate);
-        currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
-
         let unitIndex = 0;
         let weekNumber = 1;
 
@@ -413,51 +497,177 @@ class AdvancedSummerPlanner {
             return dailyBreakdown;
         }
 
-        let currentUnitIndex = 0;
-        let currentTopicIndex = 0;
-        let hoursSpentOnCurrentTopic = 0;
-        let weekNumber = 1;
-        let lastWeekStart = new Date(studyDays[0]);
-        lastWeekStart.setDate(lastWeekStart.getDate() - lastWeekStart.getDay()); // Start of week
+        // Create a flattened list of all content items with their time requirements
+        const allContentItems: Array<{
+            unitIndex: number;
+            topicIndex: number;
+            contentIndex: number;
+            unitTitle: string;
+            topicTitle: string;
+            contentItem: ContentItem;
+            remainingMinutes: number;
+        }> = [];
 
+        unitPlans.forEach((unit, unitIndex) => {
+            unit.topicDetails.forEach((topic, topicIndex) => {
+                topic.contents.forEach((content, contentIndex) => {
+                    allContentItems.push({
+                        unitIndex,
+                        topicIndex,
+                        contentIndex,
+                        unitTitle: unit.unitTitle,
+                        topicTitle: topic.title,
+                        contentItem: content,
+                        remainingMinutes: content.estimatedMinutes,
+                    });
+                });
+            });
+        });
+
+        // Calculate total content time and distribute evenly across study days
+        const totalContentMinutes = allContentItems.reduce((sum, item) => sum + item.contentItem.estimatedMinutes, 0);
+        const minutesPerDay = hoursPerDay * 60;
+        const totalAvailableMinutes = studyDays.length * minutesPerDay;
+
+        // Instead of scaling, distribute content evenly by adjusting pace
+        console.log(`📊 Content distribution: ${totalContentMinutes} minutes of content across ${studyDays.length} days (${totalAvailableMinutes} minutes available)`);
+
+        // Calculate target pace: how much content per day to use all available time
+        const targetContentPerDay = totalContentMinutes / studyDays.length;
+        const paceAdjustment = targetContentPerDay / minutesPerDay;
+
+        console.log(`⚖️  Adjusting pace: targeting ${Math.round(targetContentPerDay)} minutes of content per day (${Math.round(paceAdjustment * 100)}% of daily time)`);
+
+        let currentContentIndex = 0;
+        let weekNumber = 1;
         const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-        studyDays.forEach((day) => {
-            // Check if we've moved to a new week
-            const currentWeekStart = new Date(day);
-            currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
+        studyDays.forEach((day, index) => {
+            // Check if we've moved to a new week (every 7 days from start)
+            const daysSinceStart = Math.floor(index / 7);
+            const currentWeekNumber = daysSinceStart + 1;
 
-            if (currentWeekStart.getTime() !== lastWeekStart.getTime()) {
-                weekNumber++;
-                lastWeekStart = currentWeekStart;
+            if (currentWeekNumber !== weekNumber) {
+                weekNumber = currentWeekNumber;
             }
 
-            // Get current unit and topic
-            if (currentUnitIndex >= unitPlans.length) {
-                currentUnitIndex = unitPlans.length - 1; // Stay on last unit
-            }
+            // Use adaptive daily minutes based on remaining content and days
+            const remainingDays = studyDays.length - index;
+            const remainingContentMinutes = allContentItems.slice(currentContentIndex).reduce((sum, item) => sum + item.remainingMinutes, 0);
+            const adaptiveDailyMinutes = remainingDays > 0 ? Math.min(minutesPerDay, Math.max(60, remainingContentMinutes / remainingDays)) : minutesPerDay;
 
-            const currentUnit = unitPlans[currentUnitIndex];
-            const currentTopic = currentUnit.topics[currentTopicIndex] || currentUnit.topics[currentUnit.topics.length - 1];
+            let remainingDailyMinutes = adaptiveDailyMinutes;
+            const contentForDay: Array<{
+                topicTitle: string;
+                contentTitle: string;
+                contentKind: string;
+                minutesSpent: number;
+                isPartial: boolean;
+                partNumber?: number;
+                totalParts?: number;
+            }> = [];
 
-            // Calculate hours per topic (roughly)
-            const hoursPerTopic = currentUnit.estimatedHours / currentUnit.topics.length;
+            let currentTopic = "";
+            let currentUnit = "";
 
-            // Create topic breakdown for the day
-            let topicBreakdown = "";
-            if (hoursPerDay <= hoursPerTopic) {
-                // Single topic for the day
-                const progressPercent = Math.min(100, Math.round(((hoursSpentOnCurrentTopic + hoursPerDay) / hoursPerTopic) * 100));
-                topicBreakdown = `Continue: ${currentTopic} (${progressPercent}% complete)`;
-            } else {
-                // Multiple topics or complete a topic
-                const remainingHoursForTopic = Math.max(0, hoursPerTopic - hoursSpentOnCurrentTopic);
-                if (remainingHoursForTopic <= hoursPerDay) {
-                    topicBreakdown = `Complete: ${currentTopic} + Start next topic`;
-                } else {
-                    topicBreakdown = `Work on: ${currentTopic} (${Math.round((hoursSpentOnCurrentTopic / hoursPerTopic) * 100)}% → ${Math.round(((hoursSpentOnCurrentTopic + hoursPerDay) / hoursPerTopic) * 100)}%)`;
+            // Distribute content across the day
+            while (remainingDailyMinutes > 5 && currentContentIndex < allContentItems.length) {
+                const contentItem = allContentItems[currentContentIndex];
+                const minutesToSpend = Math.min(remainingDailyMinutes, contentItem.remainingMinutes);
+
+                if (minutesToSpend > 0) {
+                    const isPartial = contentItem.remainingMinutes > minutesToSpend;
+                    let partInfo = {};
+
+                    if (isPartial) {
+                        // Calculate part information for partial content
+                        const totalParts = Math.ceil(contentItem.contentItem.estimatedMinutes / 30); // 30-minute chunks
+                        const currentPart = Math.ceil((contentItem.contentItem.estimatedMinutes - contentItem.remainingMinutes + minutesToSpend) / 30);
+                        partInfo = {
+                            isPartial: true,
+                            partNumber: currentPart,
+                            totalParts: totalParts,
+                        };
+                    }
+
+                    contentForDay.push({
+                        topicTitle: contentItem.topicTitle,
+                        contentTitle: contentItem.contentItem.title,
+                        contentKind: contentItem.contentItem.contentKind,
+                        minutesSpent: minutesToSpend,
+                        isPartial,
+                        ...partInfo,
+                    });
+
+                    contentItem.remainingMinutes -= minutesToSpend;
+                    remainingDailyMinutes -= minutesToSpend;
+
+                    // Set current topic and unit for display
+                    if (!currentTopic) {
+                        currentTopic = contentItem.topicTitle;
+                        currentUnit = contentItem.unitTitle;
+                    }
+                }
+
+                // Move to next content item if current one is completed
+                if (contentItem.remainingMinutes <= 1) {
+                    currentContentIndex++;
+                }
+
+                // Break if we can't make more progress
+                if (minutesToSpend === 0) {
+                    break;
                 }
             }
+
+            // Create topic breakdown description
+            let topicBreakdown = "";
+            if (contentForDay.length === 0) {
+                topicBreakdown = "📖 Review previous topics";
+            } else if (contentForDay.length === 1) {
+                const content = contentForDay[0];
+                if (content.isPartial) {
+                    topicBreakdown = `📖 Work on: ${content.topicTitle} Part ${content.partNumber}/${content.totalParts} - ${content.contentTitle}`;
+                } else {
+                    topicBreakdown = `✅ Complete: ${content.contentTitle} (${content.contentKind})`;
+                }
+            } else {
+                const mainTopic = contentForDay[0].topicTitle;
+                const sameTopicCount = contentForDay.filter((c) => c.topicTitle === mainTopic).length;
+
+                if (sameTopicCount === contentForDay.length) {
+                    // All content from same topic
+                    topicBreakdown = `🔄 Work on: ${mainTopic} (${contentForDay.length} items)`;
+                } else {
+                    // Mixed topics
+                    const topics = [...new Set(contentForDay.map((c) => c.topicTitle))];
+                    if (topics.length <= 2) {
+                        topicBreakdown = `🔄 Work on: ${topics.join(" + ")}`;
+                    } else {
+                        topicBreakdown = `🔄 Work on: ${topics[0]} + ${topics.length - 1} more topics`;
+                    }
+                }
+            }
+
+            // Create detailed daily schedule with specific content
+            const contentList = contentForDay
+                .map((content) => {
+                    const duration = `${Math.round(content.minutesSpent)}min`;
+                    const partInfo = content.isPartial ? ` (Part ${content.partNumber}/${content.totalParts})` : "";
+                    return `${content.contentKind}: ${content.contentTitle}${partInfo} [${duration}]`;
+                })
+                .join(" | ");
+
+            const dailySchedule = [
+                "10:00-11:00 AM: Calculus 2 Study (1h) - Khan Academy videos & notes",
+                "11:00-11:30 AM: Light Workout/Break (30min)",
+                "11:30 AM-12:30 PM: Video Editing Work (1h)",
+                "12:30-2:00 PM: Lunch & Break (1.5h)",
+                "2:00-4:00 PM: Deep Calculus 2 Study (2h) - Practice problems",
+                "4:00-5:00 PM: Video Editing Work (1h)",
+                "Evening: Free Time/Review",
+                `📚 Today's Content: ${contentList || "Review previous material"}`,
+            ].join(" | ");
 
             dailyBreakdown.push({
                 day: daysOfWeek[day.getDay()],
@@ -466,27 +676,13 @@ class AdvancedSummerPlanner {
                     day: "numeric",
                     year: "numeric",
                 }),
-                calc2Topic: currentTopic,
+                calc2Topic: currentTopic || "Review",
                 topicBreakdown: topicBreakdown,
-                unitTitle: currentUnit.unitTitle,
+                unitTitle: currentUnit || "Review",
                 weekNumber: weekNumber,
                 studyHours: hoursPerDay,
+                dailySchedule: dailySchedule,
             });
-
-            // Update progress tracking
-            hoursSpentOnCurrentTopic += hoursPerDay;
-
-            // Check if we should move to next topic
-            if (hoursSpentOnCurrentTopic >= hoursPerTopic) {
-                currentTopicIndex++;
-                hoursSpentOnCurrentTopic = 0;
-
-                // Check if we should move to next unit
-                if (currentTopicIndex >= currentUnit.topics.length) {
-                    currentUnitIndex++;
-                    currentTopicIndex = 0;
-                }
-            }
         });
 
         return dailyBreakdown;
@@ -515,6 +711,18 @@ class AdvancedSummerPlanner {
             console.log(`   ⏱️  Estimated Time: ${unit.estimatedHours} hours`);
             console.log(`   📚 Topics: ${unit.topics.length} topics`);
             console.log(`   🎯 Target Week: ${unit.weekTarget}`);
+
+            // Show topic-level breakdown for better understanding
+            const topTopics = unit.topicDetails.slice(0, 3);
+            if (topTopics.length > 0) {
+                console.log("   📋 Top Topics:");
+                topTopics.forEach((topic) => {
+                    console.log(`      • ${topic.title} (${topic.estimatedHours}h, ${topic.videoCount} videos)`);
+                });
+                if (unit.topicDetails.length > 3) {
+                    console.log(`      ... and ${unit.topicDetails.length - 3} more topics`);
+                }
+            }
         });
 
         const totalHours = plan.unitPlanning.reduce((sum, unit) => sum + unit.estimatedHours, 0);
@@ -552,6 +760,7 @@ class AdvancedSummerPlanner {
         console.log("• 📱 Use Khan Academy mobile app during breaks for quick reviews");
         console.log("• 🎯 Focus on understanding concepts, not just memorizing formulas");
         console.log("• 📊 Track your progress and adjust timeline if needed");
+        console.log("• 🎉 BUFFER WEEK: Finish Sept 14th - Full week before school for final review!");
 
         console.log("\n⚡ CALCULUS 2 FOCUS AREAS:");
         console.log("• Integration techniques and methods");
@@ -567,23 +776,32 @@ class AdvancedSummerPlanner {
         console.log("✨ Enhanced format with emojis and progress tracking!\n");
 
         // Show first few rows as preview
-        console.log("📋 PREVIEW (First 5 days):");
-        console.log("📅 Day\t📆 Date\t📚 Topic\t🎯 Daily Goal\t📖 Unit");
-        console.log("───────\t────────\t──────────\t─────────────\t──────────");
+        console.log("📋 DETAILED DAILY SCHEDULE PREVIEW (First 3 days):");
+        console.log("═".repeat(80));
 
-        dailyBreakdown.slice(0, 5).forEach((day) => {
+        dailyBreakdown.slice(0, 3).forEach((day, index) => {
             const enhancedGoal = day.topicBreakdown.replace("Complete: ", "✅ Master: ").replace("Continue: ", "📖 Continue: ").replace("Work on: ", "🔄 Work on: ").replace(" + Start next topic", " → Next");
 
             const formattedUnit = day.unitTitle
-                .replace("Integrals review", "🔢 Integrals")
-                .replace("Integration techniques", "🧮 Integration")
-                .replace("Differential equations", "📐 Diff Eq")
-                .replace("Applications of integrals", "🎯 Applications")
-                .replace("Parametric equations, polar coordinates, and vector-valued functions", "📊 Parametric")
-                .replace("Series", "∞ Series");
+                .replace("Integrals review", "🔢 Integrals Review")
+                .replace("Integration techniques", "🧮 Integration Techniques")
+                .replace("Differential equations", "📐 Differential Equations")
+                .replace("Applications of integrals", "🎯 Applications of Integrals")
+                .replace("Parametric equations, polar coordinates, and vector-valued functions", "📊 Parametric & Polar")
+                .replace("Series", "∞ Infinite Series");
 
-            const shortGoal = enhancedGoal.length > 35 ? enhancedGoal.substring(0, 32) + "..." : enhancedGoal;
-            console.log(`${day.day}\t${day.date}\t${day.calc2Topic.substring(0, 25)}...\t${shortGoal}\t${formattedUnit}`);
+            console.log(`\n📅 ${day.day}, ${day.date} - Week ${day.weekNumber}`);
+            console.log(`📚 Topic: ${day.calc2Topic}`);
+            console.log(`🎯 Goal: ${enhancedGoal}`);
+            console.log(`📖 Unit: ${formattedUnit}`);
+            console.log(`⏰ DAILY SCHEDULE:`);
+
+            const scheduleItems = day.dailySchedule.split(" | ");
+            scheduleItems.forEach((item) => {
+                console.log(`   ${item}`);
+            });
+
+            if (index < 2) console.log("─".repeat(60));
         });
 
         if (dailyBreakdown.length > 5) {
