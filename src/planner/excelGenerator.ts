@@ -424,6 +424,302 @@ export async function generateExcelSpreadsheet(studyPlan: StudyPlan, filename: s
         }
     });
 
+    // Add comprehensive content breakdown worksheet
+    const contentSheet = workbook.addWorksheet("Detailed Content Breakdown", {
+        pageSetup: {
+            paperSize: 9,
+            orientation: "landscape",
+            margins: {
+                left: 0.5,
+                right: 0.5,
+                top: 0.75,
+                bottom: 0.75,
+                header: 0.3,
+                footer: 0.3,
+            },
+            printTitlesRow: "1:1",
+            fitToPage: true,
+            fitToWidth: 1,
+            fitToHeight: 0,
+        },
+        headerFooter: {
+            firstHeader: '&C&"Arial,Bold"Calculus 2 - Detailed Content Breakdown',
+            firstFooter: "&L&D &T&C&P&RAll Videos, Exercises, Quizzes, and Tests",
+        },
+        views: [
+            {
+                state: "frozen",
+                xSplit: 0,
+                ySplit: 1,
+                topLeftCell: "A2",
+                activeCell: "A2",
+            },
+        ],
+    });
+
+    // Define columns for detailed content
+    contentSheet.columns = [
+        { header: "Unit", key: "unit", width: 28 },
+        { header: "Topic", key: "topic", width: 35 },
+        { header: "Content Type", key: "type", width: 16 },
+        { header: "Content Title", key: "title", width: 45 },
+        { header: "Time (min)", key: "minutes", width: 12 },
+        { header: "Description", key: "description", width: 50 },
+        { header: "Khan Academy URL", key: "url", width: 35 },
+        { header: "Status", key: "status", width: 15 },
+    ];
+
+    // Style the content header row
+    const contentHeaderRow = contentSheet.getRow(1);
+    contentHeaderRow.font = {
+        name: "Segoe UI",
+        size: 12,
+        bold: true,
+        color: { argb: "FFFFFFFF" },
+    };
+    contentHeaderRow.fill = {
+        type: "gradient",
+        gradient: "angle",
+        degree: 90,
+        stops: [
+            { position: 0, color: { argb: "FF059669" } },
+            { position: 1, color: { argb: "FF047857" } },
+        ],
+    };
+    contentHeaderRow.alignment = {
+        vertical: "middle",
+        horizontal: "center",
+        wrapText: true,
+    };
+    contentHeaderRow.height = 35;
+
+    contentHeaderRow.eachCell((cell) => {
+        cell.border = {
+            top: { style: "thick", color: { argb: "FF047857" } },
+            left: { style: "medium", color: { argb: "FF047857" } },
+            bottom: { style: "thick", color: { argb: "FF047857" } },
+            right: { style: "medium", color: { argb: "FF047857" } },
+        };
+    });
+
+    // Add all content items from the study plan
+    let contentRowIndex = 0;
+    studyPlan.unitPlanning.forEach((unit) => {
+        unit.topicDetails.forEach((topic) => {
+            topic.contents.forEach((content) => {
+                contentRowIndex++;
+
+                // Determine content type styling and emojis
+                let typeDisplay = content.contentKind;
+                let typeEmoji = "📄";
+                let typeColor = "FF6B7280";
+
+                switch (content.contentKind) {
+                    case "Video":
+                        typeEmoji = "🎥";
+                        typeColor = "FFE53E3E";
+                        typeDisplay = "Video";
+                        break;
+                    case "Exercise":
+                        typeEmoji = "📝";
+                        typeColor = "FF3B82F6";
+                        typeDisplay = "Exercise";
+                        break;
+                    case "Article":
+                        typeEmoji = "📖";
+                        typeColor = "FF8B5CF6";
+                        typeDisplay = "Article";
+                        break;
+                    case "Topic quiz":
+                        typeEmoji = "📋";
+                        typeColor = "FFF59E0B";
+                        typeDisplay = "Quiz";
+                        break;
+                    case "Topic unit test":
+                        typeEmoji = "🎯";
+                        typeColor = "FFEF4444";
+                        typeDisplay = "Unit Test";
+                        break;
+                    case "Quiz":
+                        typeEmoji = "📊";
+                        typeColor = "FFF59E0B";
+                        typeDisplay = "Quiz";
+                        break;
+                    case "Test":
+                        typeEmoji = "🎯";
+                        typeColor = "FFEF4444";
+                        typeDisplay = "Test";
+                        break;
+                    case "Assessment":
+                        typeEmoji = "✅";
+                        typeColor = "FF10B981";
+                        typeDisplay = "Assessment";
+                        break;
+                    case "Practice":
+                        typeEmoji = "🔄";
+                        typeColor = "FF06B6D4";
+                        typeDisplay = "Practice";
+                        break;
+                }
+
+                const row = contentSheet.addRow({
+                    unit: unit.unitTitle,
+                    topic: topic.title,
+                    type: `${typeEmoji} ${typeDisplay}`,
+                    title: content.title,
+                    minutes: Math.round(content.estimatedMinutes),
+                    description: content.title, // Using title as description for now
+                    url: content.url ? `https://khanacademy.org${content.url}` : "N/A",
+                    status: "Not Started",
+                });
+
+                // Row styling
+                row.font = { name: "Segoe UI", size: 10 };
+                row.height = 25;
+                row.alignment = { vertical: "middle", wrapText: true };
+
+                // Alternating row colors
+                if (contentRowIndex % 2 === 0) {
+                    row.fill = {
+                        type: "pattern",
+                        pattern: "solid",
+                        fgColor: { argb: "FFF9FAFB" },
+                    };
+                }
+
+                // Unit column styling
+                row.getCell("unit").font = { name: "Segoe UI", size: 9, bold: true };
+                row.getCell("unit").alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+
+                // Topic column styling
+                row.getCell("topic").font = { name: "Segoe UI", size: 9, bold: true };
+                row.getCell("topic").alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+
+                // Content type styling with colors
+                row.getCell("type").font = {
+                    name: "Segoe UI",
+                    size: 10,
+                    bold: true,
+                    color: { argb: typeColor },
+                };
+                row.getCell("type").alignment = { vertical: "middle", horizontal: "center" };
+
+                // Title styling
+                row.getCell("title").font = { name: "Segoe UI", size: 10 };
+                row.getCell("title").alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+
+                // Time styling
+                row.getCell("minutes").font = { name: "Segoe UI", size: 10, bold: true };
+                row.getCell("minutes").alignment = { vertical: "middle", horizontal: "center" };
+                row.getCell("minutes").fill = {
+                    type: "pattern",
+                    pattern: "solid",
+                    fgColor: { argb: "FFF0F9FF" },
+                };
+
+                // Description styling
+                row.getCell("description").font = { name: "Segoe UI", size: 9 };
+                row.getCell("description").alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+
+                // URL styling
+                if (content.url) {
+                    row.getCell("url").font = {
+                        name: "Segoe UI",
+                        size: 8,
+                        underline: true,
+                        color: { argb: "FF2563EB" },
+                    };
+                    row.getCell("url").alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+                }
+
+                // Status styling
+                row.getCell("status").font = { name: "Segoe UI", size: 9, italic: true };
+                row.getCell("status").alignment = { vertical: "middle", horizontal: "center" };
+                row.getCell("status").fill = {
+                    type: "pattern",
+                    pattern: "solid",
+                    fgColor: { argb: "FFFEF2F2" },
+                };
+
+                // Add borders
+                row.eachCell((cell) => {
+                    cell.border = {
+                        top: { style: "thin", color: { argb: "FFE5E7EB" } },
+                        left: { style: "thin", color: { argb: "FFE5E7EB" } },
+                        bottom: { style: "thin", color: { argb: "FFE5E7EB" } },
+                        right: { style: "thin", color: { argb: "FFE5E7EB" } },
+                    };
+                });
+            });
+        });
+    });
+
+    // Add summary statistics at the bottom of content sheet
+    const totalVideos = studyPlan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.filter((c) => c.contentKind === "Video").length, 0), 0);
+
+    const totalExercises = studyPlan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.filter((c) => c.contentKind === "Exercise").length, 0), 0);
+
+    const totalQuizzes = studyPlan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.filter((c) => c.contentKind === "Topic quiz" || c.contentKind === "Quiz").length, 0), 0);
+
+    const totalTests = studyPlan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.filter((c) => c.contentKind === "Topic unit test" || c.contentKind === "Test").length, 0), 0);
+
+    const totalArticles = studyPlan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.filter((c) => c.contentKind === "Article").length, 0), 0);
+
+    const totalContent = studyPlan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.length, 0), 0);
+
+    // Add summary rows
+    contentSheet.addRow([]);
+    const summaryStartRow = contentSheet.addRow({
+        unit: "CONTENT SUMMARY",
+        topic: "",
+        type: "",
+        title: "",
+        minutes: "",
+        description: "",
+        url: "",
+        status: "",
+    });
+
+    summaryStartRow.font = { name: "Segoe UI", size: 12, bold: true };
+    summaryStartRow.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF1F2937" },
+    };
+    summaryStartRow.getCell("unit").font = {
+        name: "Segoe UI",
+        size: 12,
+        bold: true,
+        color: { argb: "FFFFFFFF" },
+    };
+
+    const summaryRows = [
+        { label: "🎥 Total Videos", count: totalVideos },
+        { label: "📝 Total Exercises", count: totalExercises },
+        { label: "📖 Total Articles", count: totalArticles },
+        { label: "📋 Total Quizzes", count: totalQuizzes },
+        { label: "🎯 Total Tests", count: totalTests },
+        { label: "📚 Total Content Items", count: totalContent },
+    ];
+
+    summaryRows.forEach((item) => {
+        const row = contentSheet.addRow({
+            unit: item.label,
+            topic: item.count.toString(),
+            type: "",
+            title: "",
+            minutes: "",
+            description: "",
+            url: "",
+            status: "",
+        });
+
+        row.font = { name: "Segoe UI", size: 11, bold: true };
+        row.getCell("unit").font = { name: "Segoe UI", size: 11, bold: true };
+        row.getCell("topic").font = { name: "Segoe UI", size: 11, bold: true, color: { argb: "FF059669" } };
+        row.getCell("topic").alignment = { vertical: "middle", horizontal: "center" };
+    });
+
     // Save the file
     await workbook.xlsx.writeFile(filename);
     return filename;

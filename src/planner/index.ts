@@ -232,8 +232,20 @@ class AdvancedSummerPlanner {
                             estimatedMinutes = 18; // Average exercise time
                         } else if (content.contentKind === "Article") {
                             estimatedMinutes = 10; // Reading time
+                        } else if (content.contentKind === "Topic quiz") {
+                            estimatedMinutes = 25; // Quiz completion + review time
+                        } else if (content.contentKind === "Topic unit test") {
+                            estimatedMinutes = 45; // Unit test completion + review time
+                        } else if (content.contentKind === "Quiz") {
+                            estimatedMinutes = 20; // General quiz time
+                        } else if (content.contentKind === "Test") {
+                            estimatedMinutes = 40; // General test time
+                        } else if (content.contentKind === "Assessment") {
+                            estimatedMinutes = 30; // Assessment time
+                        } else if (content.contentKind === "Practice") {
+                            estimatedMinutes = 15; // Practice time
                         } else {
-                            estimatedMinutes = 15; // Quiz/other content
+                            estimatedMinutes = 15; // Other content types
                         }
                     }
 
@@ -246,6 +258,22 @@ class AdvancedSummerPlanner {
                     };
                 });
 
+                // Check if this is a quiz or test topic (empty contents array)
+                if (topic.contents.length === 0 && (topic.title.includes("Quiz") || topic.title.includes("Unit test"))) {
+                    const isUnitTest = topic.title.includes("Unit test");
+                    const estimatedMinutes = isUnitTest ? 45 : 25;
+                    const contentKind = isUnitTest ? "Topic unit test" : "Topic quiz";
+
+                    // Add the assessment as a content item
+                    contents.push({
+                        id: topic.id,
+                        title: topic.title,
+                        contentKind: contentKind,
+                        estimatedMinutes: estimatedMinutes,
+                        url: topic.url || "",
+                    });
+                }
+
                 // More realistic time estimation based on content
                 let topicHours: number;
                 if (topic.totalTimeEstimate?.totalMinutes && topic.totalTimeEstimate.totalMinutes > 0) {
@@ -255,24 +283,30 @@ class AdvancedSummerPlanner {
                     // Use average estimate if total not available
                     topicHours = topic.totalTimeEstimate.averageMinutes / 60;
                 } else {
-                    // Calculate based on individual content items (which now use KA estimates when available)
+                    // Calculate based on individual content items (which now includes assessments)
                     const totalMinutes = contents.reduce((sum, content) => sum + content.estimatedMinutes, 0);
                     topicHours = totalMinutes / 60;
 
                     // Minimum and maximum bounds for realistic study times
-                    if (videoCount === 0 && exerciseCount === 0) {
-                        // Quiz or assessment topics
+                    if (contents.length === 1 && (contents[0].contentKind === "Topic quiz" || contents[0].contentKind === "Topic unit test")) {
+                        // Quiz or test only topics - use the assessment time
+                        topicHours = contents[0].estimatedMinutes / 60;
+                    } else if (videoCount === 0 && exerciseCount === 0 && contents.length > 0) {
+                        // Other assessment topics
                         topicHours = Math.max(0.5, topicHours);
-                    } else {
+                    } else if (contents.length > 0) {
                         // Regular content topics
                         topicHours = Math.max(1.0, Math.min(4.0, topicHours));
+                    } else {
+                        // Empty topics (shouldn't happen now)
+                        topicHours = 0;
                     }
                 }
 
                 return {
                     title: topic.title,
                     estimatedHours: Math.round(topicHours * 10) / 10,
-                    contentCount: topic.contents.length,
+                    contentCount: contents.length,
                     videoCount: videoCount,
                     videoDurationMinutes: Math.round(videoDurationMinutes * 10) / 10,
                     contents: contents,
@@ -707,27 +741,65 @@ class AdvancedSummerPlanner {
 
         console.log("\n🎯 CALCULUS 2 CURRICULUM (Khan Academy):");
         plan.unitPlanning.forEach((unit, index) => {
+            // Calculate content type breakdown for this unit
+            const unitVideos = unit.topicDetails.reduce((sum, topic) => sum + topic.contents.filter((c) => c.contentKind === "Video").length, 0);
+            const unitExercises = unit.topicDetails.reduce((sum, topic) => sum + topic.contents.filter((c) => c.contentKind === "Exercise").length, 0);
+            const unitQuizzes = unit.topicDetails.reduce((sum, topic) => sum + topic.contents.filter((c) => c.contentKind === "Topic quiz" || c.contentKind === "Quiz").length, 0);
+            const unitTests = unit.topicDetails.reduce((sum, topic) => sum + topic.contents.filter((c) => c.contentKind === "Topic unit test" || c.contentKind === "Test").length, 0);
+            const unitArticles = unit.topicDetails.reduce((sum, topic) => sum + topic.contents.filter((c) => c.contentKind === "Article").length, 0);
+            const unitOther = unit.topicDetails.reduce((sum, topic) => sum + topic.contents.filter((c) => !["Video", "Exercise", "Article", "Topic quiz", "Quiz", "Topic unit test", "Test"].includes(c.contentKind)).length, 0);
+
             console.log(`${index + 1}. ${unit.unitTitle}`);
             console.log(`   ⏱️  Estimated Time: ${unit.estimatedHours} hours`);
             console.log(`   📚 Topics: ${unit.topics.length} topics`);
             console.log(`   🎯 Target Week: ${unit.weekTarget}`);
 
+            // Show detailed content breakdown
+            console.log(`   📊 Content Breakdown:`);
+            if (unitVideos > 0) console.log(`      🎥 Videos: ${unitVideos}`);
+            if (unitExercises > 0) console.log(`      📝 Exercises: ${unitExercises}`);
+            if (unitArticles > 0) console.log(`      📖 Articles: ${unitArticles}`);
+            if (unitQuizzes > 0) console.log(`      📋 Quizzes: ${unitQuizzes}`);
+            if (unitTests > 0) console.log(`      🎯 Tests: ${unitTests}`);
+            if (unitOther > 0) console.log(`      📄 Other: ${unitOther}`);
+
             // Show topic-level breakdown for better understanding
-            const topTopics = unit.topicDetails.slice(0, 3);
+            const topTopics = unit.topicDetails.slice(0, 2);
             if (topTopics.length > 0) {
-                console.log("   📋 Top Topics:");
+                console.log("   📋 Key Topics:");
                 topTopics.forEach((topic) => {
-                    console.log(`      • ${topic.title} (${topic.estimatedHours}h, ${topic.videoCount} videos)`);
+                    const topicQuizzes = topic.contents.filter((c) => c.contentKind === "Topic quiz" || c.contentKind === "Quiz").length;
+                    const topicTests = topic.contents.filter((c) => c.contentKind === "Topic unit test" || c.contentKind === "Test").length;
+                    const assessmentInfo = topicQuizzes > 0 || topicTests > 0 ? ` [${topicQuizzes} quizzes, ${topicTests} tests]` : "";
+                    console.log(`      • ${topic.title} (${topic.estimatedHours}h, ${topic.videoCount} videos${assessmentInfo})`);
                 });
-                if (unit.topicDetails.length > 3) {
-                    console.log(`      ... and ${unit.topicDetails.length - 3} more topics`);
+                if (unit.topicDetails.length > 2) {
+                    console.log(`      ... and ${unit.topicDetails.length - 2} more topics`);
                 }
             }
         });
 
         const totalHours = plan.unitPlanning.reduce((sum, unit) => sum + unit.estimatedHours, 0);
+
+        // Calculate comprehensive content statistics
+        const totalVideos = plan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.filter((c) => c.contentKind === "Video").length, 0), 0);
+        const totalExercises = plan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.filter((c) => c.contentKind === "Exercise").length, 0), 0);
+        const totalQuizzes = plan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.filter((c) => c.contentKind === "Topic quiz" || c.contentKind === "Quiz").length, 0), 0);
+        const totalTests = plan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.filter((c) => c.contentKind === "Topic unit test" || c.contentKind === "Test").length, 0), 0);
+        const totalArticles = plan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.filter((c) => c.contentKind === "Article").length, 0), 0);
+        const totalContent = plan.unitPlanning.reduce((sum, unit) => sum + unit.topicDetails.reduce((topicSum, topic) => topicSum + topic.contents.length, 0), 0);
+
+        console.log(`\n📊 COMPREHENSIVE CONTENT BREAKDOWN:`);
+        console.log(`   📚 Total Content Items: ${totalContent}`);
+        console.log(`   🎥 Videos: ${totalVideos} (includes Khan Academy video lessons)`);
+        console.log(`   📝 Exercises: ${totalExercises} (practice problems and drills)`);
+        console.log(`   📖 Articles: ${totalArticles} (reading materials and explanations)`);
+        console.log(`   📋 Quizzes: ${totalQuizzes} (topic assessments and reviews)`);
+        console.log(`   🎯 Tests: ${totalTests} (unit tests and comprehensive assessments)`);
+
         console.log(`\n📊 TOTAL CALCULUS 2 STUDY TIME: ${totalHours} hours`);
         console.log(`📅 AVAILABLE STUDY DAYS: ${plan.totalStudyDays} days`);
+        console.log(`⚡ ENHANCED FEATURES: Now includes proper time allocation for quizzes (25min) and tests (45min)!`);
 
         console.log("\n⏰ DAILY SCHEDULE TEMPLATE:");
         plan.dailySchedule.forEach((block) => {
@@ -820,9 +892,15 @@ class AdvancedSummerPlanner {
         console.log("• ☐ Checkboxes for completion tracking");
         console.log("• 🎨 Color-coded unit names with emojis");
 
-        console.log("\n💡 GET THE PROFESSIONAL EXCEL FILE:");
+        console.log("\n💡 GET THE COMPREHENSIVE EXCEL FILE:");
         console.log("🚀 Run: bun src/index.ts excel");
-        console.log("📁 Creates a beautifully formatted .xlsx file with no encoding issues!");
+        console.log("📁 Creates a professionally formatted .xlsx file with:");
+        console.log("   • Daily study schedule with progress tracking");
+        console.log("   • Study plan summary with key metrics");
+        console.log("   • 🆕 DETAILED CONTENT BREAKDOWN: Every video, exercise, quiz & test!");
+        console.log("   • Direct Khan Academy URLs for each content item");
+        console.log("   • Time estimates and completion tracking");
+        console.log("   • Color-coded content types and unit organization");
     }
 }
 
