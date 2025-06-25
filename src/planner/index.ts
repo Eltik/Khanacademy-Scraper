@@ -332,8 +332,8 @@ class AdvancedSummerPlanner {
     }
 
     private getAvailableStudyDays(): { days: Date[]; totalDays: number } {
-        // Set fixed start date to June 22nd
-        const startDate = new Date("2025-06-22"); // Sunday, June 22, 2025
+        // Set fixed start date to June 23rd (Monday) to avoid starting on Sunday
+        const startDate = new Date("2025-06-23"); // Monday, June 23, 2025
         const studyDays: Date[] = [];
 
         const currentYear = startDate.getFullYear();
@@ -349,6 +349,11 @@ class AdvancedSummerPlanner {
 
         for (let date = new Date(startDate); date < endDate; date.setDate(date.getDate() + 1)) {
             let isAvailable = true;
+
+            // Skip Sundays (getDay() returns 0 for Sunday)
+            if (date.getDay() === 0) {
+                isAvailable = false;
+            }
 
             // Only check vacation constraint since we end before camping trip
             if (date >= vacationStart && date <= vacationEnd) {
